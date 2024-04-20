@@ -6,6 +6,10 @@ from fastapi import HTTPException, Depends
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 import os
+from utils.auth import create_access_token, authenticate_user
+from bson import ObjectId 
+# from utils.firebase import upload_image_from_base64
+
 
 class ServiceProviderController:
     @staticmethod
@@ -40,7 +44,12 @@ class ServiceProviderController:
             raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "nid_number", "message": "NID number is required"}])
         if not password or len(password) < 6:
             raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "password", "message": "Password must be at least 6 characters long"}])
-
+        if not image:
+            default_image_url = os.getenv("PROFILE_PICTURE")
+            if not default_image_url:
+                raise InternalServerError("Default image URL is not provided in environment variables")
+            image = default_image_url
+            
         if db.get_collection("service_providers").find_one({"email": email}):
             raise CustomHTTPException(status_code=422, message="Email already exists", error_messages=[{"path": "email", "message": "Email already exists"}])
 
@@ -67,37 +76,72 @@ class ServiceProviderController:
             return service_provider
         except Exception as e:
             raise InternalServerError("Failed to register service provider: " + str(e))
+        
+ 
+    @staticmethod
+    def get_service_provider_by_id(provider_id):
+     try:
+        object_id = ObjectId(provider_id)
+        service_provider = db.get_collection("service_providers").find_one({"_id": object_id})
+        if service_provider:
+            service_provider['_id'] = str(service_provider['_id'])
+
+        return service_provider
+     except Exception as e:
+        raise InternalServerError("Failed to get service provider: " + str(e))
+    
+    @staticmethod
+    def get_all_service_providers():
+        try:
+            all_service_providers = list(db.get_collection("service_providers").find())
+            for provider in all_service_providers:
+                provider['_id'] = str(provider['_id'])
+
+            return all_service_providers
+        except Exception as e:
+            raise InternalServerError("Failed to retrieve all service providers: " + str(e))
+        
+    # @staticmethod
+    # def update_service_provider(provider_id: str, provider_data: dict):
+    #     try:
+    #         if not ObjectId.is_valid(provider_id):
+    #             raise CustomHTTPException(status_code=400, message="Invalid provider ID format", error_messages=[{"path": "provided_id", "message": "Invalid provider ID format"}])
+
+    #         base64_image = provider_data.pop("image", None)
+    #         if base64_image:
+    #             image_url = upload_image_from_base64(base64_image, provider_id)
+    #             provider_data["image"] = image_url
+
+    #         updated_provider = db.get_collection("service_providers").find_one_and_update(
+    #             {"_id": ObjectId(provider_id)},
+    #             {"$set": provider_data},
+    #             return_document=True
+    #         )
+
+    #         if updated_provider:
+    #             return updated_provider
+    #         else:
+    #             raise HTTPException(status_code=404, detail="Service provider not found")
+    #     except HTTPException:
+    #         raise
+    #     except Exception as e:
+    #         raise InternalServerError("Failed to update service provider: " + str(e))
+
+        
+    
 
 
 #login
-JWT_SECRET = os.getenv("JWT_SECRET")
-ALGORITHM = os.getenv("ALGORITHM")
+
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginController:
     @staticmethod
-    def create_access_token(data: dict, expires_delta: timedelta):
-        to_encode = data.copy()
-        expire = datetime.utcnow() + expires_delta
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=ALGORITHM)
-        return encoded_jwt
-
-    @staticmethod
-    def authenticate_user(login_data: Login):
-        user = db.get_collection("service_providers").find_one({"email": login_data.email})
-        if not user:
-            raise CustomHTTPException(status_code=401, message="Unauthorized", error_messages=[{"path": "email", "message": "Email not found"}])
-        if not pwd_context.verify(login_data.password, user["password"]):
-            raise CustomHTTPException(status_code=401, message="Unauthorized", error_messages=[{"path": "password", "message": "Incorrect password"}])
-        return user
-
-    @staticmethod
     def login(login_data: Login):
-        user = LoginController.authenticate_user(login_data)
+        user = authenticate_user(login_data)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = LoginController.create_access_token(
+        access_token = create_access_token(
             data={"sub": user["email"]}, expires_delta=access_token_expires
         )
         return AccessToken(access_token=access_token, token_type="bearer")
+    
