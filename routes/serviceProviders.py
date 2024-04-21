@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Header
 from controllers.serviceProvider import ServiceProviderController,LoginController
 from exceptions.status_error import BadRequest, UnprocessableEntity, InternalServerError
-from models.serviceProvider import ServiceProvider,Login,AccessToken
+from models.serviceProvider import ServiceProvider,Login,AccessToken,UpdateServiceProviderProfile
 from middleware.validation import validate_access_token
 from config.db import db
 import collections
-
 
 serviceProvider = APIRouter()
 
@@ -13,7 +12,6 @@ serviceProvider = APIRouter()
 async def register_service_provider(service_provider_data: ServiceProvider):
     service_provider = ServiceProviderController.register_service_provider(service_provider_data.dict())
     return {"message": "Service provider registered successfully", "data": service_provider}
-
 
 @serviceProvider.post("/service-providers/login")
 async def login(login_data: Login):
@@ -55,13 +53,13 @@ async def get_all_service_providers():
         raise HTTPException(status_code=500, detail=str(e))
     
     
-# @serviceProvider.put("/service-providers/{provider_id}")
-# async def update_service_provider(provider_id: str, provider_data: ServiceProvider, access_token: str = Header(..., description="Access Token")):
-#     try:
-#         user_email = validate_access_token(access_token)
-#         updated_provider = ServiceProviderController.update_service_provider(provider_id, provider_data.dict())
-#         return {"message": "Service provider updated successfully", "data": updated_provider}
-#     except HTTPException as http_exception:
-#         raise http_exception
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+@serviceProvider.put("/service-providers/{provider_id}")
+async def update_service_provider(provider_id: str, provider_data: ServiceProvider, access_token: str = Header(..., description="Access Token")):
+    try:
+        user_email = validate_access_token(access_token)
+        updated_provider = ServiceProviderController.update_service_provider(provider_id, provider_data.dict())
+        return {"message": "Service provider updated successfully", "data": updated_provider}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

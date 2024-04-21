@@ -8,7 +8,7 @@ from jose import JWTError, jwt
 import os
 from utils.auth import create_access_token, authenticate_user
 from bson import ObjectId 
-# from utils.firebase import upload_image_from_base64
+from utils.firebase import upload_image_from_base64
 
 
 class ServiceProviderController:
@@ -101,31 +101,44 @@ class ServiceProviderController:
         except Exception as e:
             raise InternalServerError("Failed to retrieve all service providers: " + str(e))
         
-    # @staticmethod
-    # def update_service_provider(provider_id: str, provider_data: dict):
-    #     try:
-    #         if not ObjectId.is_valid(provider_id):
-    #             raise CustomHTTPException(status_code=400, message="Invalid provider ID format", error_messages=[{"path": "provided_id", "message": "Invalid provider ID format"}])
+    @staticmethod
+    def update_service_provider(provider_id: str, provider_data: dict):
+     try:
+        if not ObjectId.is_valid(provider_id):
+            raise CustomHTTPException(status_code=400, message="Invalid provider ID format", error_messages=[{"path": "provided_id", "message": "Invalid provider ID format"}])
 
-    #         base64_image = provider_data.pop("image", None)
-    #         if base64_image:
-    #             image_url = upload_image_from_base64(base64_image, provider_id)
-    #             provider_data["image"] = image_url
+        base64_image = provider_data.pop("image", None)
+        if base64_image:
+            image_url = upload_image_from_base64(base64_image, provider_id)
+            provider_data["image"] = image_url
 
-    #         updated_provider = db.get_collection("service_providers").find_one_and_update(
-    #             {"_id": ObjectId(provider_id)},
-    #             {"$set": provider_data},
-    #             return_document=True
-    #         )
+        # Hash the password if it's provided in the data
+        if 'password' in provider_data:
+            password = provider_data.pop("password")
+            if password and len(password) >= 6:
+                pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+                hashed_password = pwd_context.hash(password)
+                provider_data["password"] = hashed_password
+            else:
+                raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "password", "message": "Password must be at least 6 characters long"}])
 
-    #         if updated_provider:
-    #             return updated_provider
-    #         else:
-    #             raise HTTPException(status_code=404, detail="Service provider not found")
-    #     except HTTPException:
-    #         raise
-    #     except Exception as e:
-    #         raise InternalServerError("Failed to update service provider: " + str(e))
+        updated_provider = db.get_collection("service_providers").find_one_and_update(
+            {"_id": ObjectId(provider_id)},
+            {"$set": provider_data},
+            return_document=True
+        )
+
+        if updated_provider:
+            # Convert ObjectId to string
+            updated_provider['_id'] = str(updated_provider['_id'])
+            return updated_provider
+        else:
+            raise HTTPException(status_code=404, detail="Service provider not found")
+     except HTTPException:
+        raise
+     except Exception as e:
+        raise InternalServerError("Failed to update service provider: " + str(e))
+
 
         
     

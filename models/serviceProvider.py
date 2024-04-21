@@ -13,6 +13,16 @@ class ServiceProvider(BaseModel):
     image: str = None
     role: str = "serviceprovider"
     password: str = None
+    
+class UpdateServiceProviderProfile(BaseModel):
+    name: str 
+    work_type: str 
+    pay_per_hour: float 
+    experience: int 
+    email: str 
+    phone_number: str
+    nid_number: str
+    image: str
 
 class AccessToken(BaseModel):
     access_token: str
