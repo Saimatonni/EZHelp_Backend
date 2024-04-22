@@ -20,7 +20,8 @@ async def login(login_data: Login):
         return {
             "message": "Login successful",
             "access_token": access_token.access_token,
-            "token_type": access_token.token_type
+            "token_type": access_token.token_type,
+            "sp_id": access_token.id
         }
     except HTTPException as http_exception:
         raise http_exception
@@ -54,7 +55,7 @@ async def get_all_service_providers():
     
     
 @serviceProvider.put("/service-providers/{provider_id}")
-async def update_service_provider(provider_id: str, provider_data: ServiceProvider, access_token: str = Header(..., description="Access Token")):
+async def update_service_provider(provider_id: str, provider_data: UpdateServiceProviderProfile, access_token: str = Header(..., description="Access Token")):
     try:
         user_email = validate_access_token(access_token)
         updated_provider = ServiceProviderController.update_service_provider(provider_id, provider_data.dict())
@@ -63,3 +64,6 @@ async def update_service_provider(provider_id: str, provider_data: ServiceProvid
         raise http_exception
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+

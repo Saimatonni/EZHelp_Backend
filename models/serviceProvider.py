@@ -23,10 +23,12 @@ class UpdateServiceProviderProfile(BaseModel):
     phone_number: str
     nid_number: str
     image: str
+    password: str = None
 
 class AccessToken(BaseModel):
     access_token: str
     token_type: str
+    id: str
 
 class Login(BaseModel):
     role: str

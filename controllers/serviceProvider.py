@@ -1,10 +1,10 @@
-from models.serviceProvider import ServiceProvider,Login,AccessToken
+from models.serviceProvider import ServiceProvider,Login,AccessToken,UpdateServiceProviderProfile
 from exceptions.status_error import CustomHTTPException, InternalServerError
 from config.db import db
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from jose import JWTError
 import os
 from utils.auth import create_access_token, authenticate_user
 from bson import ObjectId 
@@ -21,8 +21,8 @@ class ServiceProviderController:
         email = service_provider_data.get('email')
         phone_number = service_provider_data.get('phone_number')
         nid_number = service_provider_data.get('nid_number')
-        rating = service_provider_data.get('rating')
-        total_review_count = service_provider_data.get('total_review_count')
+        # rating = service_provider_data.get('rating')
+        # total_review_count = service_provider_data.get('total_review_count')
         image = service_provider_data.get('image')
         password = service_provider_data.get('password')
 
@@ -64,8 +64,8 @@ class ServiceProviderController:
             email=email,
             phone_number=phone_number,
             nid_number=nid_number,
-            rating=rating,
-            total_review_count=total_review_count,
+            # rating=rating,
+            # total_review_count=total_review_count,
             image=image,
             role=role,
             password=hashed_password  
@@ -102,7 +102,7 @@ class ServiceProviderController:
             raise InternalServerError("Failed to retrieve all service providers: " + str(e))
         
     @staticmethod
-    def update_service_provider(provider_id: str, provider_data: dict):
+    def update_service_provider(provider_id: str, provider_data: UpdateServiceProviderProfile):
      try:
         if not ObjectId.is_valid(provider_id):
             raise CustomHTTPException(status_code=400, message="Invalid provider ID format", error_messages=[{"path": "provided_id", "message": "Invalid provider ID format"}])
@@ -156,5 +156,5 @@ class LoginController:
         access_token = create_access_token(
             data={"sub": user["email"]}, expires_delta=access_token_expires
         )
-        return AccessToken(access_token=access_token, token_type="bearer")
+        return AccessToken(access_token=access_token, token_type="bearer",id=str(user["_id"]))
     
