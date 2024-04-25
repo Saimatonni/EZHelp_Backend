@@ -15,7 +15,6 @@ async def register_client(client_data: Client):
 @client_router.post("/clients/login")
 async def login(login_data: Login):
     try:
-        print("hello")
         access_token = LoginController2.login(login_data)
         return {
             "message": "Login successful",
