@@ -19,4 +19,4 @@ class Job(BaseModel):
     images: List[str]
     startDate: str
     endDate: str
-    bidded_sp_ids: List[int] = None
+    bidded_sp_ids: List[int]=[]

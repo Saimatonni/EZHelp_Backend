@@ -4,7 +4,6 @@ from exceptions.status_error import BadRequest, UnprocessableEntity, InternalSer
 from models.serviceProvider import ServiceProvider,Login,AccessToken,UpdateServiceProviderProfile
 from middleware.validation import validate_access_token
 from config.db import db
-import collections
 
 serviceProvider = APIRouter()
 

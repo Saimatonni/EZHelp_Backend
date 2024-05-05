@@ -65,3 +65,36 @@ async def delete_job(job_id: str, access_token: str = Header(..., description="A
         raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})
+    
+@job_router.put("/jobs/{job_id}/bid")
+async def bid_on_job(job_id: str, sp_id: str, access_token: str = Header(..., description="Access Token")):
+    try:
+        job_id_obj = ObjectId(job_id)
+        message = JobController.bid_on_job(job_id_obj, sp_id, access_token)
+        return {"message": message}
+    except CustomHTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})
+
+
+@job_router.get("/jobs/bidded/{sp_id}")
+async def get_jobs_by_sp_id(sp_id: str, access_token: str = Header(..., description="Access Token")):
+    try:
+        jobs = JobController.get_jobs_by_sp_id(sp_id, access_token)
+        return {"message": "Jobs retrieved successfully", "data": jobs}
+    except CustomHTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})
+    
+    
+@job_router.get("/bibbed_sp/{job_id}")
+async def get_service_providers_by_job_id(job_id: str):
+    try:
+        service_providers = JobController.get_service_providers_by_job_id(job_id)
+        return {"message": "Service providers retrieved successfully", "data": service_providers}
+    except CustomHTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})

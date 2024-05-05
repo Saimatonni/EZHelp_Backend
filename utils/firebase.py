@@ -1,7 +1,6 @@
 import pyrebase
 import base64
 
-
 class InternalServerError(Exception):
     def __init__(self, message):
         self.message = message

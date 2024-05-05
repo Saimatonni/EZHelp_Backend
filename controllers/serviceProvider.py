@@ -4,7 +4,6 @@ from config.db import db
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends
 from datetime import datetime, timedelta
-from jose import JWTError
 import os
 from utils.auth import create_access_token, authenticate_user
 from bson import ObjectId 
