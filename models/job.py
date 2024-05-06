@@ -13,6 +13,7 @@ class Job(BaseModel):
     address: str
     GPSCoordinates: Coordinates
     emergency: bool
+    open: bool
     payAmount: float
     shortTitle: str
     description: str

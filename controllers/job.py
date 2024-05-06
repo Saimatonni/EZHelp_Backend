@@ -28,6 +28,7 @@ class JobController:
         address = job_data.get('address')
         gps_coordinates = job_data.get('GPSCoordinates')
         emergency = job_data.get('emergency')
+        open = job_data.get('open')
         pay_amount = job_data.get('payAmount')
         short_title = job_data.get('shortTitle')
         description = job_data.get('description')
@@ -70,6 +71,7 @@ class JobController:
                 address=address,
                 GPSCoordinates=gps_coordinates,
                 emergency=emergency,
+                open=open,
                 payAmount=pay_amount,
                 shortTitle=short_title,
                 description=description,
@@ -188,3 +190,33 @@ class JobController:
             return service_providers
         except Exception as e:
             raise InternalServerError("Failed to retrieve service providers details: " + str(e))
+        
+    @staticmethod
+    def update_job_open_status(job_id: str, access_token: str, open_status: bool):
+        try:
+            user_email = validate_access_token(access_token)
+            user_id = str(get_user_id_by_email(user_email))
+        except HTTPException as e:
+            raise CustomHTTPException(status_code=e.status_code, message="Unauthorized",
+                                      error_messages=[{"path": "access_token",
+                                                       "message": "Invalid or missing access token"}])
+
+        if not user_id:
+            raise CustomHTTPException(status_code=401, message="Unauthorized",
+                                      error_messages=[{"path": "access_token", "message": "User not found"}])
+
+        try:
+            job_id_obj = ObjectId(job_id)
+            job = db.get_collection("jobs").find_one({"_id": job_id_obj})
+
+            if not job:
+                raise CustomHTTPException(status_code=404, message="Job not found",
+                                          error_messages=[{"path": "job_id",
+                                                           "message": "Job with the provided ID does not exist"}])
+
+            db.get_collection("jobs").update_one({"_id": job_id_obj}, {"$set": {"open": open_status}})
+
+            return {"message": "Job open status updated successfully", "job_id": str(job_id)}
+
+        except Exception as e:
+            raise InternalServerError("Failed to update job open status: " + str(e))

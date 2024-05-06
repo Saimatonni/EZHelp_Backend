@@ -8,6 +8,8 @@ import os
 from utils.auth import create_access_token, authenticate_user
 from bson import ObjectId 
 from utils.firebase import upload_image_from_base64
+from utils.database import get_user_id_by_email,get_sp_id_by_email
+from middleware.validation import validate_access_token
 
 
 class ServiceProviderController:
@@ -137,6 +139,58 @@ class ServiceProviderController:
         raise
      except Exception as e:
         raise InternalServerError("Failed to update service provider: " + str(e))
+    
+    @staticmethod
+    def assign_service_provider_to_job(job_id: str, provider_id: str, access_token: str):
+        try:
+            user_email = validate_access_token(access_token)
+            user_id = str(get_user_id_by_email(user_email))  
+        except HTTPException as e:
+            raise CustomHTTPException(status_code=e.status_code, message="Unauthorized", error_messages=[{"path": "access_token", "message": "Invalid or missing access token"}])
+
+        if not user_id:
+            raise CustomHTTPException(status_code=401, message="Unauthorized", error_messages=[{"path": "access_token", "message": "User not found"}])
+        try:
+            object_id = ObjectId(provider_id)
+            service_provider = db.get_collection("service_providers").find_one({"_id": object_id})
+            if service_provider:
+            #    service_provider_dict = dict(service_provider)
+               service_provider.pop('_id', None)
+            assignment_data = {
+                "job_id": job_id,
+                "user_id": user_id,
+                "provider_details": service_provider
+            }
+            db.get_collection("assignments").insert_one(dict(assignment_data))
+
+            return assignment_data
+
+        except CustomHTTPException as e:
+            raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})
+        
+    @staticmethod
+    def get_assignments_for_user(access_token: str):
+        try:
+            user_email = validate_access_token(access_token)
+            user_id = str(get_user_id_by_email(user_email))  
+        except HTTPException as e:
+            raise CustomHTTPException(status_code=e.status_code, message="Unauthorized", error_messages=[{"path": "access_token", "message": "Invalid or missing access token"}])
+
+        if not user_id:
+            raise CustomHTTPException(status_code=401, message="Unauthorized", error_messages=[{"path": "access_token", "message": "User not found"}])
+
+        try:
+            assignments = list(db.get_collection("assignments").find({"user_id": user_id}))
+            for assignment in assignments:
+                assignment['_id'] = str(assignment['_id'])
+                assignment['provider_details'].pop('_id', None)
+
+            return assignments
+
+        except Exception as e:
+            raise InternalServerError("Failed to retrieve assignments: " + str(e))
 
 
         

@@ -98,3 +98,13 @@ async def get_service_providers_by_job_id(job_id: str):
         raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})
+    
+@job_router.put("/jobs/{job_id}/update_open_status")
+async def update_job_open_status(job_id: str, open_status: bool, access_token: str = Header(..., description="Access Token")):
+    try:
+        message = JobController.update_job_open_status(job_id, access_token, open_status)
+        return {"message": message}
+    except CustomHTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message, headers=e.headers)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal Server Error", headers={"error_message": str(e)})

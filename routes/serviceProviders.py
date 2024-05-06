@@ -64,5 +64,26 @@ async def update_service_provider(provider_id: str, provider_data: UpdateService
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+@serviceProvider.post("/service-providers/assign-job/{job_id}/{provider_id}")
+async def assign_service_provider_to_job(job_id: str, provider_id: str, access_token: str = Header(..., description="Access Token")):
+    try:
+        assignment_data = ServiceProviderController.assign_service_provider_to_job(job_id, provider_id, access_token)      
+        return {"message": "Service provider assigned to job successfully", "data": assignment_data}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@serviceProvider.get("/assignments")
+async def get_assignments_for_user(access_token: str = Header(..., description="Access Token")):
+    try:
+        assignments = ServiceProviderController.get_assignments_for_user(access_token)
+        return assignments
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    
     
 
