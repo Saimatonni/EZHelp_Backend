@@ -16,3 +16,10 @@ class UpdateClient(BaseModel):
     phone_number: str = None
     image: str = None
     password: str = None
+    
+class RatingReview(BaseModel):
+    provider_id: str
+    client_name: str
+    client_image: str
+    rating: float
+    review: str

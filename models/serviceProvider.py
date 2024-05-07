@@ -8,8 +8,8 @@ class ServiceProvider(BaseModel):
     email: str = None
     phone_number: str = None
     nid_number: str = None
-    rating: float = None
-    total_review_count: int = None
+    rating: float = 0
+    total_review_count: int = 0
     image: str = None
     role: str = "serviceprovider"
     password: str = None

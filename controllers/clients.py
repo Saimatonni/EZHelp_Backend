@@ -1,8 +1,8 @@
-from models.clients import Client,UpdateClient
+from models.clients import Client,UpdateClient,RatingReview
 from exceptions.status_error import CustomHTTPException, InternalServerError
 from config.db import db
 from passlib.context import CryptContext
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends,Request
 from jose import JWTError
 import os
 from utils.auth import create_access_token, authenticate_user
@@ -10,6 +10,8 @@ from bson import ObjectId
 from utils.firebase import upload_image_from_base64
 from models.serviceProvider import ServiceProvider,Login,AccessToken
 from datetime import datetime, timedelta
+from utils.database import get_user_id_by_email,get_sp_id_by_email
+from middleware.validation import validate_access_token
 
 class ClientController:
     @staticmethod
@@ -98,6 +100,76 @@ class ClientController:
             raise
         except Exception as e:
             raise InternalServerError("Failed to update client: " + str(e))
+        
+    @staticmethod
+    def rating_controller(request_data: RatingReview, access_token: str):
+        try:
+            user_email = validate_access_token(access_token)
+            user_id = str(get_user_id_by_email(user_email))  
+        except HTTPException as e:
+            raise CustomHTTPException(status_code=e.status_code, message="Unauthorized", error_messages=[{"path": "access_token", "message": "Invalid or missing access token"}])
+
+        if not user_id:
+            raise CustomHTTPException(status_code=401, message="Unauthorized", error_messages=[{"path": "access_token", "message": "User not found"}])
+
+        try:
+            provider_id = request_data.provider_id
+            client_name = request_data.client_name
+            client_image = request_data.client_image
+            rating = request_data.rating
+            review = request_data.review
+            
+            new_review_count = 1
+            
+            if not ObjectId.is_valid(provider_id):
+               raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "provider_id", "message": "Invalid ObjectId format"}])
+
+            try:
+                provider_data = db.get_collection("service_providers").find_one({"_id": ObjectId(provider_id)})
+                if not provider_data:
+                    raise CustomHTTPException(status_code=404, message="Provider not found", error_messages=[{"path": "id", "message": "Provider not found for the given ID"}])
+
+                current_rating = provider_data.get('rating', 0)
+                total_review_count = provider_data.get('total_review_count', 0)
+                
+
+                new_total_review_count = total_review_count + new_review_count
+                new_average_rating = (current_rating + rating ) / new_total_review_count
+
+                db.get_collection("service_providers").update_one(
+                    {"_id": ObjectId(provider_id)},
+                    {"$set": {"rating": new_average_rating, "total_review_count": new_total_review_count}}
+                )
+            except Exception as e:
+                raise InternalServerError("Failed to update provider rating: " + str(e))
+
+            db.get_collection("rating").insert_one({
+                "provider_id": provider_id,
+                "client_name": client_name,
+                "client_image": client_image,
+                "rating": rating,
+                "review": review
+            })
+            return request_data
+        except CustomHTTPException:
+            raise
+        except Exception as e:
+            raise InternalServerError("Failed to get client info: " + str(e))
+        
+        
+    @staticmethod
+    def get_provider_ratings(provider_id: str):
+        try:
+            if not ObjectId.is_valid(provider_id):
+                raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "provider_id", "message": "Invalid ObjectId format"}])
+
+            provider_ratings = db.get_collection("rating").find({"provider_id": provider_id})
+            provider_ratings = [dict(rating, _id=str(rating['_id'])) for rating in provider_ratings]
+            return list(provider_ratings)
+        except CustomHTTPException:
+            raise
+        except Exception as e:
+            raise InternalServerError("Failed to get provider ratings: " + str(e))
         
 #login
         

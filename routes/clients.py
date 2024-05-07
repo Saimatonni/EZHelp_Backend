@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header,Request
 from controllers.clients import ClientController,LoginController2
 from exceptions.status_error import CustomHTTPException
-from models.clients import Client,UpdateClient
+from models.clients import Client,UpdateClient,RatingReview
 from middleware.validation import validate_access_token
 from models.serviceProvider import ServiceProvider,Login
 
@@ -51,6 +51,26 @@ async def update_client(client_id: str, client_data: UpdateClient, access_token:
         user_email = validate_access_token(access_token)
         updated_client = ClientController.update_client(client_id, client_data)
         return {"message": "Client updated successfully", "data": updated_client}
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@client_router.post("/clients/rating")
+async def rating_controller(request_data: RatingReview, access_token: str = Header(..., description="Access Token")):
+    try:
+        data= ClientController.rating_controller(request_data, access_token)
+        return data
+    except HTTPException as http_exception:
+        raise http_exception
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@client_router.get("/providers/{provider_id}/ratings")
+async def get_provider_ratings(provider_id: str):
+    try:
+        ratings = ClientController.get_provider_ratings(provider_id)
+        return {"ratings": ratings}
     except HTTPException as http_exception:
         raise http_exception
     except Exception as e:

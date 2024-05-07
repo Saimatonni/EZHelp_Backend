@@ -2,7 +2,7 @@ from models.serviceProvider import ServiceProvider,Login,AccessToken,UpdateServi
 from exceptions.status_error import CustomHTTPException, InternalServerError
 from config.db import db
 from passlib.context import CryptContext
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends,Request
 from datetime import datetime, timedelta
 import os
 from utils.auth import create_access_token, authenticate_user
@@ -192,9 +192,6 @@ class ServiceProviderController:
         except Exception as e:
             raise InternalServerError("Failed to retrieve assignments: " + str(e))
 
-
-        
-    
 
 
 #login
