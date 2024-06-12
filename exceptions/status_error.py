@@ -81,4 +81,10 @@ class InternalServerError(CustomHTTPException):
 
     def __str__(self):
         return self.message
+class ExtraError(CustomHTTPException):
+    def __init__(self, detail: str = "Internal Server Error"):
+        error_message = {"path": "", "message": detail}
+        super().__init__(status_code=500, message=detail, error_messages=[error_message])
 
+    def __str__(self):
+        return self.message
