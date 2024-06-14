@@ -24,6 +24,16 @@ class UpdateServiceProviderProfile(BaseModel):
     nid_number: str
     image: str
     password: str = None
+# class UpdateServiceProviderProfile(BaseModel):
+#     name: str 
+#     work_type: str 
+#     pay_per_hour: float 
+#     experience: int 
+#     email: str 
+#     phone_number: str
+#     nid_number: str
+#     image: str
+#     password: str = None
 
 class AccessToken(BaseModel):
     access_token: str
