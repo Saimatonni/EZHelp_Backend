@@ -42,8 +42,8 @@ class JobController:
             raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "address", "message": "Address is required"}])
         if not gps_coordinates:
             raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "GPSCoordinates", "message": "GPS coordinates are required"}])
-        if not emergency:
-            raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "emergency", "message": "Emergency flag is required"}])
+        # if not emergency:
+        #     raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "emergency", "message": "Emergency flag is required"}])
         if not pay_amount:
             raise CustomHTTPException(status_code=400, message="Bad Request", error_messages=[{"path": "payAmount", "message": "Pay amount is required"}])
         if not short_title:

@@ -4,7 +4,7 @@ class Client(BaseModel):
     name: str = None
     email: str = None
     phone_number: str = None
-    total_posts: int = None 
+    total_posts: int = 0 
     image: str = None
     password: str = None
     role: str = "client"

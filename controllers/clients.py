@@ -19,6 +19,7 @@ class ClientController:
         name = client_data.get('name')
         email = client_data.get('email')
         password = client_data.get('password')
+        phone_number = client_data.get('phone_number')
         image = client_data.get('image')
 
         if not name:
@@ -42,6 +43,7 @@ class ClientController:
         client = Client(
             name=name,
             email=email,
+            phone_number= phone_number,
             password=hashed_password,
             image=image, 
         )
