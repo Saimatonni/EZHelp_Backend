@@ -1,5 +1,6 @@
 import pyrebase
 import base64
+import uuid
 
 class InternalServerError(Exception):
     def __init__(self, message):
@@ -27,8 +28,8 @@ def upload_image_from_base64(base64_image, provider_id):
        
             image_data = base64.b64decode(base64_image)
 
-         
-            filename = f"images/{provider_id}.jpg" 
+            unique_id = uuid.uuid4()
+            filename = f"images/{provider_id}_{unique_id}.jpg"
 
          
             storage.child(filename).put(image_data)
